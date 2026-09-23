@@ -9,6 +9,11 @@
     "answers": ["München", "Berlin", "Hamburg", "Köln"],
     "correct": 1
   },
+    {
+    "text": "Wie viele Bundesländer hat Österreich?",
+    "answers": ["5", "11", "8", "9"],
+    "correct": 1
+  },
   {
     "text": "Wie viel ist 8 x 7?",
     "answers": ["54", "56", "64", "48"],
