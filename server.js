@@ -12,28 +12,7 @@ app.use(express.static("public"));
 const PORT = 3000;
 const rooms = new Map();
 
-const questions = [
-  {
-    text: "Wie viele Kontinente gibt es?",
-    answers: ["5", "6", "7", "8"],
-    correct: 2
-  },
-  {
-    text: "Was ist die Hauptstadt von Deutschland?",
-    answers: ["München", "Berlin", "Hamburg", "Köln"],
-    correct: 1
-  },
-  {
-    text: "Wie viel ist 8 x 7?",
-    answers: ["54", "56", "64", "48"],
-    correct: 1
-  },
-  {
-    text: "Welche Farbe entsteht aus Blau und Gelb?",
-    answers: ["Grün", "Lila", "Orange", "Braun"],
-    correct: 0
-  }
-];
+const questions = readData();
 
 function createRoomCode() {
   return crypto.randomBytes(3).toString("hex").toUpperCase();
