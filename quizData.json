@@ -1,0 +1,52 @@
+[
+  {
+    "text": "Wie viele Kontinente gibt es?",
+    "answers": ["5", "6", "7", "8"],
+    "correct": 2
+  },
+  {
+    "text": "Was ist die Hauptstadt von Deutschland?",
+    "answers": ["München", "Berlin", "Hamburg", "Köln"],
+    "correct": 1
+  },
+  {
+    "text": "Wie viel ist 8 x 7?",
+    "answers": ["54", "56", "64", "48"],
+    "correct": 1
+  },
+  {
+    "text": "Welche Farbe entsteht aus Blau und Gelb?",
+    "answers": ["Grün", "Lila", "Orange", "Braun"],
+    "correct": 0
+  },
+  {
+    "text": "Was ist die Hauptstadt von Österreich?",
+    "answers": ["Graz", "Wien", "Salzburg", "Linz"],
+    "correct": 1
+  },
+  {
+    "text": "Wie viele Tage hat eine Woche?",
+    "answers": ["5", "6", "7", "8"],
+    "correct": 2
+  },
+  {
+    "text": "Welcher Planet ist der Erde am nächsten zur Sonne?",
+    "answers": ["Mars", "Venus", "Jupiter", "Saturn"],
+    "correct": 1
+  },
+  {
+    "text": "Wie viel ist 10 + 15?",
+    "answers": ["20", "25", "30", "35"],
+    "correct": 1
+  },
+  {
+    "text": "Welche Sprache wird hauptsächlich in Spanien gesprochen?",
+    "answers": ["Italienisch", "Französisch", "Spanisch", "Portugiesisch"],
+    "correct": 2
+  },
+  {
+    "text": "Wie viele Minuten hat eine Stunde?",
+    "answers": ["30", "45", "60", "90"],
+    "correct": 2
+  }
+]
