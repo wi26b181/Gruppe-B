@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interaktives Quiz</title>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 850px;
+      background: white;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #312e81;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      margin: 8px 0;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #4f46e5;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #3730a3;
+    }
+
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .box {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #f3f4f6;
+    }
+
+    .answer {
+      background: #e0e7ff;
+      color: #1e1b4b;
+      text-align: left;
+    }
+
+    .answer:hover {
+      background: #c7d2fe;
+    }
+
+    .answer.selected {
+      background: #facc15;
+    }
+
+    #timer {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #dc2626;
+      margin: 20px;
+    }
+
+    #players,
+    #ranking {
+      padding-left: 0;
+      list-style: none;
+    }
+
+    #players li,
+    #ranking li {
+      background: white;
+      margin: 7px 0;
+      padding: 10px;
+      border-radius: 7px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #qrcode {
+      display: block;
+      margin: 15px auto;
+    }
+
+    #message {
+      text-align: center;
+      font-weight: bold;
+      color: #b91c1c;
+      margin-top: 15px;
+    }
+
+    .success {
+      color: #15803d !important;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h1>🎯 Interaktives Quiz</h1>
+
+    <section id="home">
+      <h2>Quiz starten oder beitreten</h2>
+
+      <input id="username" placeholder="Dein Username">
+
+      <button id="createButton">
+        Neues Quiz erstellen
+      </button>
+
+      <hr>
+
+      <input id="roomCodeInput" placeholder="Spielcode, z. B. A1B2C3">
+
+      <button id="joinButton">
+        Quiz beitreten
+      </button>
+    </section>
+
+    <section id="lobby" class="hidden">
+      <h2>Warteraum</h2>
+
+      <p>
+        Spielcode:
+        <strong id="roomCode"></strong>
+      </p>
+
+      <p>
+        Andere Spieler können diesen QR-Code scannen:
+      </p>
+
+      <canvas id="qrcode"></canvas>
+
+      <h3>Spieler:</h3>
+      <ul id="players"></ul>
+
+      <button id="startButton" class="hidden">
+        Quiz starten
+      </button>
+    </section>
+
+    <section id="quiz" class="hidden">
+      <h2 id="questionTitle"></h2>
+
+      <div id="timer"></div>
+
+      <div class="box">
+        <h2 id="questionText"></h2>
+        <div id="answers"></div>
+      </div>
+
+      <p id="answerResult"></p>
+    </section>
+
+    <section id="result" class="hidden">
+      <h2>🏆 Endergebnis</h2>
+      <ol id="ranking"></ol>
+
+      <button onclick="location.reload()">
+        Neues Quiz
+      </button>
+    </section>
+
+    <p id="message"></p>
+  </main>
+
+  <script>
+    const socket = io();
+
+    let currentRoom = "";
+    let isHost = false;
+    let timerInterval = null;
+    let selectedAnswer = false;
+
+    const home = document.getElementById("home");
+    const lobby = document.getElementById("lobby");
+    const quiz = document.getElementById("quiz");
+    const result = document.getElementById("result");
+
+    const usernameInput = document.getElementById("username");
+    const roomCodeInput = document.getElementById("roomCodeInput");
+    const message = document.getElementById("message");
+
+    function showMessage(text, success = false) {
+      message.textContent = text;
+      message.className = success ? "success" : "";
+    }
+
+    function showSection(section) {
+      home.classList.add("hidden");
+      lobby.classList.add("hidden");
+      quiz.classList.add("hidden");
+      result.classList.add("hidden");
+
+      section.classList.remove("hidden");
+    }
+
+    function updatePlayers(players) {
+      const playersList = document.getElementById("players");
+      playersList.innerHTML = "";
+
+      players.forEach(player => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span>${player.username}</span>
+          <strong>${player.score} Punkte</strong>
+        `;
+        playersList.appendChild(li);
+      });
+    }
+
+    document.getElementById("createButton").addEventListener("click", () => {
+      const username = usernameInput.value.trim();
+
+      if (!username) {
+        showMessage("Bitte gib einen Usernamen ein.");
+        return;
+      }
+
+      socket.emit("create-room", { username });
+    });
+
+    document.getElementById("joinButton").addEventListener("click", () => {
+      const username = usernameInput.value.trim();
+      const roomCode = roomCodeInput.value.trim().toUpperCase();
+
+      if (!username || !roomCode) {
+        showMessage("Bitte Username und Spielcode eingeben.");
+        return;
+      }
+
+      socket.emit("join-room", {
+        username,
+        roomCode
+      });
+    });
+
+    document.getElementById("startButton").addEventListener("click", () => {
+      socket.emit("start-game", {
+        roomCode: currentRoom
+      });
+    });
+
+    socket.on("room-created", data => {
+      currentRoom = data.roomCode;
+      isHost = true;
+
+      document.getElementById("roomCode").textContent = currentRoom;
+      document.getElementById("startButton").classList.remove("hidden");
+
+      updatePlayers(data.players);
+      showSection(lobby);
+
+      const joinUrl =
+        `${window.location.origin}?room=${currentRoom}`;
+
+      QRCode.toCanvas(
+        document.getElementById("qrcode"),
+        joinUrl,
+        error => {
+          if (error) console.error(error);
+        }
+      );
+
+      showMessage("Quiz wurde erstellt.", true);
+    });
+
+    socket.on("joined-room", data => {
+      currentRoom = data.roomCode;
+      isHost = false;
+
+      document.getElementById("roomCode").textContent = currentRoom;
+      document.getElementById("startButton").classList.add("hidden");
+
+      showSection(lobby);
+      showMessage("Du bist dem Quiz beigetreten.", true);
+    });
+
+    socket.on("players-updated", players => {
+      updatePlayers(players);
+    });
+
+    socket.on("game-started", () => {
+      showSection(quiz);
+    });
+
+    socket.on("new-question", data => {
+      showSection(quiz);
+
+      selectedAnswer = false;
+      document.getElementById("answerResult").textContent = "";
+
+      document.getElementById("questionTitle").textContent =
+        `Frage ${data.questionNumber} von ${data.totalQuestions}`;
+
+      document.getElementById("questionText").textContent = data.text;
+
+      const answersContainer = document.getElementById("answers");
+      answersContainer.innerHTML = "";
+
+      data.answers.forEach((answer, index) => {
+        const button = document.createElement("button");
+
+        button.textContent = `${index + 1}. ${answer}`;
+        button.className = "answer";
+
+        button.addEventListener("click", () => {
+          if (selectedAnswer) return;
+
+          selectedAnswer = true;
+          button.classList.add("selected");
+
+          document.querySelectorAll(".answer").forEach(btn => {
+            btn.disabled = true;
+          });
+
+          socket.emit("submit-answer", {
+            roomCode: currentRoom,
+            answerIndex: index
+          });
+        });
+
+        answersContainer.appendChild(button);
+      });
+
+      startTimer(data.timeLimit);
+    });
+
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+
+      let remaining = seconds;
+      const timer = document.getElementById("timer");
+
+      timer.textContent = `${remaining} Sekunden`;
+
+      timerInterval = setInterval(() => {
+        remaining--;
+
+        timer.textContent = `${remaining} Sekunden`;
+
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          timer.textContent = "Zeit abgelaufen!";
+        }
+      }, 1000);
+    }
+
+    socket.on("answer-result", data => {
+      const resultText = document.getElementById("answerResult");
+
+      if (data.correct) {
+        resultText.textContent =
+          `Richtig! Du bekommst ${data.points} Punkte.`;
+        resultText.className = "success";
+      } else {
+        resultText.textContent = "Leider falsch.";
+        resultText.className = "";
+      }
+    });
+
+    socket.on("question-finished", data => {
+      clearInterval(timerInterval);
+
+      const resultText = document.getElementById("answerResult");
+      resultText.textContent += " Die Frage ist beendet.";
+    });
+
+    socket.on("game-finished", ranking => {
+      showSection(result);
+
+      const rankingList = document.getElementById("ranking");
+      rankingList.innerHTML = "";
+
+      ranking.forEach((player, index) => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+          <span>${index + 1}. ${player.username}</span>
+          <strong>${player.score} Punkte</strong>
+        `;
+
+        rankingList.appendChild(li);
+      });
+    });
+
+    socket.on("error-message", text => {
+      showMessage(text);
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomFromUrl = urlParams.get("room");
+
+    if (roomFromUrl) {
+      roomCodeInput.value = roomFromUrl;
+    }
+  </script>
+</body>
+</html>
