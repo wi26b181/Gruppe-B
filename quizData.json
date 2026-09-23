@@ -1,4 +1,9 @@
 [
+   {
+    "text": "Wie heißt der zehnte Bezirk?",
+    "answers": ["Floridsdord", "Favoriten", "Simmering", "Hietzing"],
+    "correct": 2
+  },
   {
     "text": "Wie viele Kontinente gibt es?",
     "answers": ["5", "6", "7", "8"],
