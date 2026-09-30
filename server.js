@@ -13,6 +13,7 @@ const PORT = 3000;
 const rooms = new Map();
 
 const questions = readData();
+const MAX_QUESTIONS = 7;
 
 function createRoomCode() {
   return crypto.randomBytes(3).toString("hex").toUpperCase();
@@ -39,9 +40,10 @@ function startQuestion(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return;
 
-  if (room.questionIndex >= questions.length) {
-    sendRanking(roomCode);
-    return;
+  if (room.questionIndex >= MAX_QUESTIONS) {
+  sendRanking(roomCode);
+  return;
+}
   }
 
   const question = questions[room.questionIndex];
@@ -50,12 +52,12 @@ function startQuestion(roomCode) {
   room.answersGiven = new Set();
 
   io.to(roomCode).emit("new-question", {
-    questionNumber: room.questionIndex + 1,
-    totalQuestions: questions.length,
-    text: question.text,
-    answers: question.answers,
-    timeLimit: room.timeLimit
-  });
+  questionNumber: room.questionIndex + 1,
+  totalQuestions: MAX_QUESTIONS,
+  text: question.text,
+  answers: question.answers,
+  timeLimit: room.timeLimit
+});
 
   clearTimeout(room.timer);
 
@@ -83,10 +85,10 @@ function finishQuestion(roomCode) {
     currentRoom.questionIndex++;
     currentRoom.questionFinished = false;
 
-    if (currentRoom.questionIndex >= questions.length) {
-      sendRanking(roomCode);
-    } else {
-      startQuestion(roomCode);
+    if (currentRoom.questionIndex >= MAX_QUESTIONS) {
+  sendRanking(roomCode);
+} else {
+  startQuestion(roomCode);
     }
   }, 2500);
 }
