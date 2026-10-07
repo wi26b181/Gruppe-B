@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interaktives Quiz</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      width: min(700px, 92vw);
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    }
+    h1, h2 { margin-top: 0; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 6px 4px 6px 0;
+    }
+    .primary { background: #222; color: white; }
+    .answer {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: #eee;
+      margin: 10px 0;
+    }
+    .answer:hover { background: #ddd; }
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      margin: 8px 0 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .hidden { display: none; }
+    .code {
+      font-size: 38px;
+      font-weight: bold;
+      letter-spacing: 5px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    #status { margin: 15px 0; font-weight: bold; }
+    #timer { font-size: 22px; font-weight: bold; }
+    li { margin: 8px 0; }
+    img.qr { width: 220px; height: 220px; display: block; margin: 15px auto; }
+    .muted { color: #666; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section id="home">
+      <h1>Interaktives Quiz</h1>
+      <p>Erstelle ein Spiel oder tritt einem bestehenden Spiel bei.</p>
+
+      <label>Dein Name</label>
+      <input id="username" placeholder="z. B. Amelie">
+
+      <button class="primary" id="createBtn">Spiel erstellen</button>
+
+      <hr>
+
+      <label>Spielcode</label>
+      <input id="roomCode" placeholder="z. B. A1B2C3" maxlength="6">
+      <button id="joinBtn">Spiel beitreten</button>
+
+      <p id="homeError" style="color:#b00020;"></p>
+    </section>
+
+    <section id="lobby" class="hidden">
+      <h2>Warteraum</h2>
+      <p>Spielcode:</p>
+      <div class="code" id="displayCode"></div>
+      <p id="hostText"></p>
+      <img id="qr" class="qr hidden" alt="QR-Code">
+
+      <h3>Spieler</h3>
+      <ul id="players"></ul>
+
+      <button class="primary hidden" id="startBtn">Quiz starten</button>
+      <p id="lobbyStatus" class="muted">Warte auf die Spielleitung...</p>
+    </section>
+
+    <section id="quiz" class="hidden">
+      <p id="questionNumber"></p>
+      <h2 id="questionText"></h2>
+      <div id="timer"></div>
+      <div id="answers"></div>
+      <p id="answerStatus"></p>
+    </section>
+
+    <section id="result" class="hidden">
+      <h2>Ergebnis</h2>
+      <ol id="ranking"></ol>
+      <button class="primary" onclick="location.reload()">Neues Spiel</button>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const home = document.getElementById("home");
+    const lobby = document.getElementById("lobby");
+    const quiz = document.getElementById("quiz");
+    const result = document.getElementById("result");
+
+    const username = document.getElementById("username");
+    const roomCodeInput = document.getElementById("roomCode");
+    const homeError = document.getElementById("homeError");
+    const displayCode = document.getElementById("displayCode");
+    const players = document.getElementById("players");
+    const startBtn = document.getElementById("startBtn");
+    const lobbyStatus = document.getElementById("lobbyStatus");
+    const hostText = document.getElementById("hostText");
+    const qr = document.getElementById("qr");
+
+    let currentRoom = "";
+    let isHost = false;
+    let timerInterval = null;
+    let answered = false;
+
+    function show(section) {
+      [home, lobby, quiz, result].forEach(s => s.classList.add("hidden"));
+      section.classList.remove("hidden");
+    }
+
+    function openLobby(roomCode, host) {
+      currentRoom = roomCode;
+      isHost = host;
+      displayCode.textContent = roomCode;
+      hostText.textContent = host
+        ? "Du bist die Spielleitung."
+        : "Du bist dem Spiel beigetreten.";
+      startBtn.classList.toggle("hidden", !host);
+      lobbyStatus.textContent = host
+        ? "Warte auf die Spieler und starte dann das Quiz."
+        : "Warte darauf, dass die Spielleitung das Quiz startet.";
+      show(lobby);
+
+      if (host) {
+        fetch("/api/join-info?room=" + encodeURIComponent(roomCode))
+          .then(r => r.json())
+          .then(data => {
+            if (data.qrDataUrl) {
+              qr.src = data.qrDataUrl;
+              qr.classList.remove("hidden");
+            }
+          })
+          .catch(() => {});
+      }
+    }
+
+    document.getElementById("createBtn").onclick = () => {
+      const name = username.value.trim() || "Spielleitung";
+      homeError.textContent = "";
+      socket.emit("create-room", { username: name });
+    };
+
+    document.getElementById("joinBtn").onclick = () => {
+      const name = username.value.trim();
+      const code = roomCodeInput.value.trim().toUpperCase();
+      homeError.textContent = "";
+
+      if (!name) {
+        homeError.textContent = "Bitte gib deinen Namen ein.";
+        return;
+      }
+      if (!code) {
+        homeError.textContent = "Bitte gib den Spielcode ein.";
+        return;
+      }
+
+      currentRoom = code;
+      socket.emit("join-room", { roomCode: code, username: name });
+    };
+
+    startBtn.onclick = () => {
+      socket.emit("start-game", { roomCode: currentRoom });
+    };
+
+    socket.on("room-created", data => {
+      openLobby(data.roomCode, true);
+      updatePlayers(data.players);
+    });
+
+    socket.on("joined-room", data => {
+      openLobby(data.roomCode, false);
+    });
+
+    socket.on("players-updated", data => {
+      updatePlayers(data);
+    });
+
+    function updatePlayers(list) {
+      players.innerHTML = "";
+      list.forEach(p => {
+        const li = document.createElement("li");
+        li.textContent = p.username + " – " + p.score + " Punkte";
+        players.appendChild(li);
+      });
+    }
+
+    socket.on("game-started", () => {
+      lobbyStatus.textContent = "Das Quiz läuft!";
+    });
+
+    socket.on("new-question", data => {
+      show(quiz);
+      answered = false;
+      document.getElementById("answerStatus").textContent = "";
+      document.getElementById("questionNumber").textContent =
+        "Frage " + data.questionNumber + " von " + data.totalQuestions;
+      document.getElementById("questionText").textContent = data.text;
+
+      const answers = document.getElementById("answers");
+      answers.innerHTML = "";
+
+      data.answers.forEach((answer, index) => {
+        const btn = document.createElement("button");
+        btn.className = "answer";
+        btn.textContent = answer;
+        btn.onclick = () => {
+          if (answered) return;
+          answered = true;
+          socket.emit("submit-answer", {
+            roomCode: currentRoom,
+            answerIndex: index
+          });
+          document.getElementById("answerStatus").textContent = "Antwort gesendet.";
+          document.querySelectorAll(".answer").forEach(b => b.disabled = true);
+        };
+        answers.appendChild(btn);
+      });
+
+      let remaining = data.timeLimit;
+      document.getElementById("timer").textContent = "Zeit: " + remaining + " s";
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        remaining--;
+        document.getElementById("timer").textContent = "Zeit: " + Math.max(0, remaining) + " s";
+        if (remaining <= 0) clearInterval(timerInterval);
+      }, 1000);
+    });
+
+    socket.on("answer-result", data => {
+      document.getElementById("answerStatus").textContent =
+        data.correct ? "Richtig! +" + data.points + " Punkte" : "Falsch.";
+    });
+
+    socket.on("question-finished", data => {
+      clearInterval(timerInterval);
+      document.getElementById("answerStatus").textContent =
+        "Frage beendet.";
+    });
+
+    socket.on("game-finished", data => {
+      clearInterval(timerInterval);
+      const ranking = document.getElementById("ranking");
+      ranking.innerHTML = "";
+      data.ranking.forEach((p, index) => {
+        const li = document.createElement("li");
+        li.textContent = p.username + " – " + p.score + " Punkte";
+        ranking.appendChild(li);
+      });
+      show(result);
+    });
+
+    socket.on("error-message", message => {
+      homeError.textContent = message;
+      if (!currentRoom) return;
+      lobbyStatus.textContent = message;
+    });
+
+    socket.on("connect_error", () => {
+      homeError.textContent = "Verbindung zum Quiz-Server fehlgeschlagen.";
+    });
+
+    // Wenn jemand über einen QR-Code mit ?room=XXXX kommt,
+    // wird der Spielcode automatisch eingetragen.
+    const params = new URLSearchParams(location.search);
+    const roomFromUrl = params.get("room");
+    if (roomFromUrl) {
+      roomCodeInput.value = roomFromUrl.toUpperCase();
+    }
+  </script>
+</body>
+</html>
