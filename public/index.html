@@ -38,6 +38,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
     /* Top Nav */
@@ -115,7 +116,6 @@
       color: white;
     }
 
-    /* Main Container */
     main {
       flex: 1;
       width: 100%;
@@ -125,6 +125,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      position: relative;
     }
 
     .view-section {
@@ -175,12 +176,6 @@
       transform: translateY(0);
     }
 
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
     .btn-primary {
       background: linear-gradient(135deg, #7a22ff, #a03bff);
       color: white;
@@ -218,7 +213,6 @@
       border-color: var(--primary-purple);
     }
 
-    /* Startseite */
     .hero-title {
       text-align: center;
       margin-bottom: 35px;
@@ -334,6 +328,7 @@
       border-radius: var(--radius-md);
       width: fit-content;
       margin: 16px auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
     }
 
     .qr-container img {
@@ -359,18 +354,40 @@
       gap: 12px;
     }
 
-    .player-chip-avatar {
-      font-size: 24px;
+    .tunnel-config-box {
+      margin-top: 18px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: left;
     }
 
-    .player-chip-name {
+    .tunnel-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .tunnel-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: white;
+    }
+
+    .tunnel-btn {
+      background: var(--primary-purple);
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
       font-weight: 700;
-      font-size: 15px;
-    }
-
-    .player-chip-status {
-      font-size: 11px;
-      color: #4ade80;
+      font-size: 12px;
+      cursor: pointer;
     }
 
     /* Live-Quiz */
@@ -495,6 +512,123 @@
       flex-shrink: 0;
     }
 
+    /* =========================================
+       MEME FEEDBACK ANIMATION OVERLAY
+       ========================================= */
+    .meme-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 2, 24, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .meme-overlay.active {
+      display: flex;
+      pointer-events: auto;
+    }
+
+    .meme-card {
+      background: #1e0938;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-radius: 28px;
+      padding: 30px 40px;
+      text-align: center;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+      transform-origin: center center;
+    }
+
+    .meme-img-container {
+      width: 250px;
+      height: 250px;
+      margin: 0 auto 16px;
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .meme-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .meme-headline {
+      font-size: 34px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .meme-subtext {
+      font-size: 18px;
+      color: #e2d9f3;
+      font-weight: 600;
+    }
+
+    /* Animierte Keyframes */
+
+    /* 1. Dab-Einhorn Sieges-Bounce */
+    .anim-dab-victory {
+      animation:
+        dabBounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+        dabGlow 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes dabBounceIn {
+      0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+      60% { transform: scale(1.12) rotate(6deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    @keyframes dabGlow {
+      from { box-shadow: 0 0 25px rgba(74, 222, 128, 0.4); }
+      to { box-shadow: 0 0 55px rgba(122, 34, 255, 0.8); }
+    }
+
+    /* 2. Monster-Einhorn Wild Shake */
+    .anim-wild-shake {
+      animation: monsterRage 0.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes monsterRage {
+      0% { transform: translate(-8px, -4px) rotate(-4deg) scale(1.05); }
+      50% { transform: translate(7px, 5px) rotate(4deg) scale(1.1); }
+      100% { transform: translate(-6px, 3px) rotate(-3deg) scale(1.02); }
+    }
+
+    /* 3. Wolf im Regen Melancholie-Zoom */
+    .anim-wolf-rain {
+      animation: wolfMelancholy 2.2s ease-in-out forwards;
+      filter: saturate(0.8) contrast(1.1);
+    }
+
+    @keyframes wolfMelancholy {
+      0% { transform: scale(0.9) translateY(10px); opacity: 0; }
+      30% { transform: scale(1) translateY(0); opacity: 1; }
+      100% { transform: scale(1.08) translateY(-6px); opacity: 1; }
+    }
+
+    /* 4. Verpeiltes Einhorn Tilt & Wobble */
+    .anim-wobble-confused {
+      animation: confuseWobble 0.9s ease-in-out infinite alternate;
+    }
+
+    @keyframes confuseWobble {
+      0% { transform: rotate(-8deg) scale(0.98); }
+      100% { transform: rotate(8deg) scale(1.05); }
+    }
+
     /* Podium */
     .podium-container {
       display: flex;
@@ -578,10 +712,6 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .ranking-row:last-child {
-      border-bottom: none;
-    }
-
     footer {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       padding: 14px 28px;
@@ -601,7 +731,6 @@
       <span class="badge">ARENA</span>
     </div>
 
-    <!-- UI Vorschau-Umschalter (zum schnellen manuellen Durchklicken) -->
     <div class="nav-tabs">
       <button class="nav-tab active" onclick="switchView('home')">1. Startseite</button>
       <button class="nav-tab" onclick="switchView('lobby')">2. Warteraum</button>
@@ -701,6 +830,21 @@
           <p id="lobbyStatus" style="font-size: 13px; color: var(--text-muted); margin-top: 8px;">
             Warte auf Mitspieler...
           </p>
+
+          <!-- Tunnel / Mobiles Netz Tool -->
+          <div class="tunnel-config-box">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 12px; font-weight: 700; color: #ffb703;">🌐 Ohne WLAN beitreten (Mobiles Netz)</span>
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+              Wenn Mitspieler über Handynetz (ohne WLAN) spielen, trage hier die Tunnel-URL (z. B. <code>npx localtunnel --port 3000</code>) ein:
+            </p>
+            <div class="tunnel-input-row">
+              <input type="text" id="tunnelUrlInput" class="tunnel-input" placeholder="https://mein-quiz.loca.lt">
+              <button type="button" class="tunnel-btn" onclick="applyCustomHostUrl()">QR-Code Update</button>
+            </div>
+            <div id="tunnelNotice" style="font-size: 11px; color: #4ade80; margin-top: 6px; display: none;">✓ QR-Code auf mobile Web-Adresse umgestellt!</div>
+          </div>
         </div>
       </div>
 
@@ -709,8 +853,20 @@
       </button>
     </section>
 
-    <!-- 3. LIVE-FRAGERUNDE -->
+    <!-- 3. LIVE-FRAGERUNDE MIT ANIMIERTEN MEMES -->
     <section id="quiz" class="view-section">
+
+      <!-- Animiertes Meme-Overlay -->
+      <div id="memeOverlay" class="meme-overlay" aria-live="polite">
+        <div id="memeCard" class="meme-card">
+          <div class="meme-img-container">
+            <img id="memeImg" class="meme-img" src="" alt="Feedback Meme">
+          </div>
+          <h2 id="memeTitle" class="meme-headline">RICHTIG! 🔥</h2>
+          <p id="memeSub" class="meme-subtext">+100 Punkte für dich!</p>
+        </div>
+      </div>
+
       <div class="quiz-status-bar">
         <span id="questionNumber" style="font-weight: 800;">Frage 1 von 7</span>
         <span id="answerStatus" style="color: #ffd700; font-weight: 700;"></span>
@@ -790,6 +946,40 @@
       console.warn("Socket.IO Server nicht erreichbar.");
     }
 
+    // MEME BILDER & DEFINITIONEN
+    const MEMES = {
+      correct: {
+        img: "Bild 07.10.26 um 19.54 (1).png", // Dab-Einhorn
+        title: "RICHTIG! 🦄✨",
+        sub: "Mega gut abgedabt!",
+        color: "#4ade80",
+        anim: "anim-dab-victory"
+      },
+      wrongs: [
+        {
+          img: "Bild 07.10.26 um 19.54.png", // Zähnefletschendes Monster-Einhorn
+          title: "LEIDER FALSCH! 💀",
+          sub: "Das Einhorn rastet komplett aus!",
+          color: "#ff5768",
+          anim: "anim-wild-shake"
+        },
+        {
+          img: "Bild 07.10.26 um 19.53.png", // Nachdenklicher Wolf im Regen
+          title: "OH WEH... 🐺🌧️",
+          sub: "Manchmal tut Wissen einfach weh.",
+          color: "#60a5fa",
+          anim: "anim-wolf-rain"
+        },
+        {
+          img: "Bild 07.10.26 um 19.52.png", // Verwirrtes Einhorn mit Schild
+          title: "VERPEILT! 🤷‍♂️",
+          sub: "Auf dem Schild stand leider was anderes...",
+          color: "#f59e0b",
+          anim: "anim-wobble-confused"
+        }
+      ]
+    };
+
     const home = document.getElementById("home");
     const lobby = document.getElementById("lobby");
     const quiz = document.getElementById("quiz");
@@ -806,11 +996,19 @@
     const hostText = document.getElementById("hostText");
     const qrImg = document.getElementById("qr");
 
+    const memeOverlay = document.getElementById("memeOverlay");
+    const memeCard = document.getElementById("memeCard");
+    const memeImg = document.getElementById("memeImg");
+    const memeTitle = document.getElementById("memeTitle");
+    const memeSub = document.getElementById("memeSub");
+
     let currentRoom = "";
     let isHost = false;
     let timerInterval = null;
+    let memeTimeout = null;
     let answered = false;
     let selectedAvatarEmoji = "🦊";
+    let customHostUrl = "";
 
     const answerIcons = ["▲", "◆", "●", "■"];
 
@@ -830,6 +1028,52 @@
       });
     }
 
+    // Meme Trigger Funktion mit lebendigen Animationen
+    function triggerMemeAnimation(isCorrect, pointsEarned) {
+      clearTimeout(memeTimeout);
+
+      // Alte Animationsklassen entfernen
+      memeCard.className = "meme-card";
+
+      if (isCorrect) {
+        const item = MEMES.correct;
+        memeImg.src = item.img;
+        memeTitle.textContent = item.title;
+        memeTitle.style.color = item.color;
+        memeSub.textContent = pointsEarned ? `+${pointsEarned} Punkte abgestaubt!` : item.sub;
+        memeCard.classList.add(item.anim);
+      } else {
+        // Zufälliges Meme aus den 3 Falsch-Bildern wählen
+        const randomItem = MEMES.wrongs[Math.floor(Math.random() * MEMES.wrongs.length)];
+        memeImg.src = randomItem.img;
+        memeTitle.textContent = randomItem.title;
+        memeTitle.style.color = randomItem.color;
+        memeSub.textContent = randomItem.sub;
+        memeCard.classList.add(randomItem.anim);
+      }
+
+      memeOverlay.classList.add("active");
+
+      // Nach 2.4 Sekunden weich ausblenden
+      memeTimeout = setTimeout(() => {
+        memeOverlay.classList.remove("active");
+      }, 2400);
+    }
+
+    function applyCustomHostUrl() {
+      const urlInput = document.getElementById("tunnelUrlInput");
+      const val = urlInput.value.trim().replace(/\/$/, "");
+      if (!val) return;
+
+      customHostUrl = val;
+      const targetJoin = `${customHostUrl}/?room=${encodeURIComponent(currentRoom || "PARTY")}`;
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(targetJoin)}`;
+
+      const notice = document.getElementById("tunnelNotice");
+      notice.style.display = "block";
+      setTimeout(() => notice.style.display = "none", 4000);
+    }
+
     function openLobby(roomCode, host) {
       currentRoom = roomCode;
       isHost = host;
@@ -844,14 +1088,23 @@
       switchView("lobby");
 
       if (host) {
-        fetch("/api/join-info?room=" + encodeURIComponent(roomCode))
-          .then(r => r.json())
-          .then(data => {
-            if (data.qrDataUrl) {
-              qrImg.src = data.qrDataUrl;
-            }
-          })
-          .catch(() => {});
+        if (customHostUrl) {
+          const joinUrl = `${customHostUrl}/?room=${encodeURIComponent(roomCode)}`;
+          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(joinUrl)}`;
+        } else {
+          fetch("/api/join-info?room=" + encodeURIComponent(roomCode))
+            .then(r => r.json())
+            .then(data => {
+              if (data.qrDataUrl) {
+                qrImg.src = data.qrDataUrl;
+              } else {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(location.origin + '/?room=' + roomCode)}`;
+              }
+            })
+            .catch(() => {
+              qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(location.origin + '/?room=' + roomCode)}`;
+            });
+        }
       }
     }
 
@@ -861,10 +1114,10 @@
         const chip = document.createElement("div");
         chip.className = "player-chip";
         chip.innerHTML = `
-          <div class="player-chip-avatar">${p.avatar || "👾"}</div>
+          <div style="font-size:24px;">${p.avatar || "👾"}</div>
           <div>
-            <div class="player-chip-name">${p.username}</div>
-            <div class="player-chip-status">Bereit (${p.score} Pkt.)</div>
+            <div style="font-weight:700; font-size:15px;">${p.username}</div>
+            <div style="font-size:11px; color:#4ade80;">Bereit (${p.score} Pkt.)</div>
           </div>
         `;
         playersContainer.appendChild(chip);
@@ -936,6 +1189,7 @@
 
       socket.on("new-question", data => {
         switchView("quiz");
+        memeOverlay.classList.remove("active");
         answered = false;
         document.getElementById("answerStatus").textContent = "";
         document.getElementById("questionNumber").textContent =
@@ -977,10 +1231,12 @@
         }, 1000);
       });
 
+      // HIER WERDEN DIE ANIMIERTEN MEMES AUSGELÖST
       socket.on("answer-result", data => {
         document.getElementById("answerStatus").textContent = data.correct
           ? "🎉 Richtig! +" + data.points + " Punkte"
           : "❌ Leider falsch!";
+        triggerMemeAnimation(data.correct, data.points);
       });
 
       socket.on("question-finished", () => {
@@ -989,6 +1245,7 @@
 
       socket.on("game-finished", data => {
         clearInterval(timerInterval);
+        memeOverlay.classList.remove("active");
         const ranking = data.ranking || [];
 
         if (ranking[0]) {
