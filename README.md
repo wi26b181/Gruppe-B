@@ -1,4 +1,5 @@
 # Interaktives Quiz (Gruppe B)
+Autor:innen: Dopplinger Amelie, Fink Eva, Ibrahim Mahmoud, Nguyen Emily
 
 Mehrspieler-Quiz mit Node.js, Express und Socket.IO.
 
